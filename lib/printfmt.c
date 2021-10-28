@@ -207,9 +207,8 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case 'o':
 			// Replace this with your code.
 			num = getuint(&ap, lflag);
-                       base = 8;
-                       goto number;
-			break;
+			base = 8;
+			goto number;
 
 		// pointer
 		case 'p':
