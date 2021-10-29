@@ -256,6 +256,9 @@ trap_dispatch(struct Trapframe *tf)
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
 
+	// Handle keyboard and serial interrupts.
+	// LAB 5: Your code here.
+
 	switch (tf->tf_trapno) {
 		case T_PGFLT:
 			page_fault_handler(tf);
@@ -275,6 +278,12 @@ trap_dispatch(struct Trapframe *tf)
 		case IRQ_OFFSET+IRQ_TIMER:
 			lapic_eoi();
 			sched_yield();
+			return;
+		case IRQ_OFFSET+IRQ_KBD:
+			kbd_intr();
+			return;
+		case IRQ_OFFSET+IRQ_SERIAL:
+			serial_intr();
 			return;
 			
 	}

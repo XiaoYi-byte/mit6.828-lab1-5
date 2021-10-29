@@ -71,14 +71,16 @@ duppage(envid_t envid, unsigned pn)
 
 	// LAB 4: Your code here.
 	void* vaddr=(void*)(pn*PGSIZE);
-
-	if((uvpt[pn] & PTE_W) || (uvpt[pn] & PTE_COW)){
+	
+	if((uvpt[pn] & PTE_SHARE) == PTE_SHARE){
+		if ((r = sys_page_map(0, vaddr, envid, vaddr, uvpt[pn] & PTE_SYSCALL)) < 0)
+            		return r;
+	} else if((uvpt[pn] & PTE_W) || (uvpt[pn] & PTE_COW)){
 		if ((r = sys_page_map(0, vaddr, envid, vaddr, PTE_P | PTE_U | PTE_COW)) < 0)
             		return r;
         	if ((r = sys_page_map(0, vaddr, 0, vaddr, PTE_P | PTE_U | PTE_COW)) < 0)
             		return r;
-	}
-	else if((r = sys_page_map(0, vaddr, envid, vaddr, PTE_P | PTE_U)) < 0) {
+	} else if((r = sys_page_map(0, vaddr, envid, vaddr, PTE_P | PTE_U)) < 0) {
 		return r;
 	}
 	// panic("duppage not implemented");

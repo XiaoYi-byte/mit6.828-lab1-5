@@ -55,10 +55,6 @@ sys_env_destroy(envid_t envid)
 
 	if ((r = envid2env(envid, &e, 1)) < 0)
 		return r;
-	if (e == curenv)
-		cprintf("[%08x] exiting gracefully\n", curenv->env_id);
-	else
-		cprintf("[%08x] destroying %08x\n", curenv->env_id, e->env_id);
 	env_destroy(e);
 	return 0;
 }
@@ -123,6 +119,31 @@ sys_env_set_status(envid_t envid, int status)
 	e->env_status = status;
 	return 0;
 	//panic("sys_env_set_status not implemented");
+}
+
+// Set envid's trap frame to 'tf'.
+// tf is modified to make sure that user environments always run at code
+// protection level 3 (CPL 3), interrupts enabled, and IOPL of 0.
+//
+// Returns 0 on success, < 0 on error.  Errors are:
+//	-E_BAD_ENV if environment envid doesn't currently exist,
+//		or the caller doesn't have permission to change envid.
+static int
+sys_env_set_trapframe(envid_t envid, struct Trapframe *tf)
+{
+	// LAB 5: Your code here.
+	// Remember to check whether the user has supplied us with a good
+	// address!
+	struct Env *e;
+	int r;
+	if(envid2env(envid, &e, 1) < 0)
+		return -E_BAD_ENV;
+	e->env_tf = *tf;
+	e->env_tf.tf_cs |= 3;
+	e->env_tf.tf_eflags |= FL_IF;
+    	e->env_tf.tf_eflags &= ~FL_IOPL_3;
+    	return 0;
+	// panic("sys_env_set_trapframe not implemented");
 }
 
 // Set the page fault upcall for 'envid' by modifying the corresponding struct
@@ -402,6 +423,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 
     		case SYS_env_set_status:
         		return sys_env_set_status(a1 ,a2);
+        		
+        	case SYS_env_set_trapframe:
+        		return sys_env_set_trapframe(a1, (struct Trapframe *)a2);
         		
         	case SYS_env_set_pgfault_upcall:
         		return sys_env_set_pgfault_upcall(a1, (void *)a2);
